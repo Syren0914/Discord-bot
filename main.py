@@ -29,8 +29,10 @@ def fetch_csv_data(url):
 @bot.event
 async def on_ready():
     print(f'✅ Logged in as {bot.user}')
+    print(os.getenv("CHANNEL_ID"))
     await check_and_send_messages()
     await send_daily_summary()
+    
 
 
 
