@@ -92,5 +92,6 @@ async def send_daily_summary():
     if summary_message.strip():
         await channel.send(summary_message)
 
+
 # Run the bot
 bot.run(os.getenv("BOT_TOKEN"))
