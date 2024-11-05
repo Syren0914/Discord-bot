@@ -7,20 +7,18 @@ import pytz
 import discord  # Import discord for Intents
 from discord.ext import commands
 import random
-import schedule
-import time
 import news
 
 # Constants
-
 CSV_URL = os.getenv("GOOGLE_SPREADSHEET")
 CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
+UNDERRATED_TECH = int(os.getenv("UNDERRATED_TECH"))# Ensure this is an integer
 TIMEZONE = os.getenv("TIMEZONE", "US/Eastern")
 eastern = pytz.timezone(TIMEZONE)
-UNDERRATED_TECH = os.getenv("UNDERRATED_TECH")
+
 
 # Discord Bot Setup
-intents = discord.Intents.default()  # Corrected here
+intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
@@ -36,21 +34,15 @@ def fetch_csv_data(url):
 async def on_ready():
     print(f'✅ Logged in as {bot.user}')
     
-    await check_and_send_messages()
-    await send_daily_summary()
-    schedule_daily_summary()
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    # Start tasks
+    bot.loop.create_task(check_and_send_messages())
+    bot.loop.create_task(schedule_daily_summary())
     
-
-
-
 # Function: Check and send event reminders
 async def check_and_send_messages():
     channel = bot.get_channel(CHANNEL_ID)
     if channel is None:
-        print("❌ Error: Channel not found.")
+        print("❌announcment  Error: Channel not found.")
         return
 
     while True:
@@ -76,7 +68,6 @@ async def check_and_send_messages():
                 if now >= event_time and now < event_time + datetime.timedelta(minutes=1):
                     await channel.send(
                         f"🔔 **Event Reminder** 🔔\n\n**📅 {description}**\n\n"
-
                         f"🔗 [Zoom link]({zoom_link})"
                     )
             except ValueError as e:
@@ -89,20 +80,30 @@ async def check_and_send_messages():
 async def send_daily_summary():
     channel = bot.get_channel(UNDERRATED_TECH)
     if channel is None:
-        print("❌ Error: Channel not found.")
+        print("❌ Error: UNDERRATED_TECH Channel not found.")
         return
 
-     # Call news.ai_news() to fetch the daily summary
-    await news.ai_news()
-    
-def schedule_daily_summary():
-    schedule.every().day.at("12:00").do(lambda: bot.loop.create_task(send_daily_summary()))
+    # Call news.ai_news() to fetch the daily summary
+    print("ai_news was executed")
+    await channel.send(news.ai_news())
 
+# Function to schedule daily summary
+async def schedule_daily_summary():
+    while True:
+        now = datetime.datetime.now(eastern)
+        target_time = now.replace(hour=12, minute=0, second=0, microsecond=0)
+        
+        # If the target time is in the past, set it for the next day
+        if now > target_time:
+            target_time += datetime.timedelta(days=1)
 
+        wait_time = (target_time - now).total_seconds()
+        await asyncio.sleep(wait_time)  # Wait until the target time
+        await send_daily_summary()  # Send the summary
 
 @bot.event
 async def on_message(message):
-    channel = bot.get_channel(1289451911702904834)
+    channel = bot.get_channel(CHANNEL_ID)  # Use CHANNEL_ID constant
     if channel is None:
         print("❌ Error: Channel not found.")
         return
@@ -115,25 +116,19 @@ async def on_message(message):
 
         # Add reactions or send GIFs based on the random number
         if random_number >= 7:
-            # Send reaction for "pretty big"
-            await message.add_reaction('👍')  # You can change the emoji if needed
+            await message.add_reaction('👍')
             await message.channel.send("Drake ?!?!")
             await message.channel.send("https://media.giphy.com/media/cL4pqu8GGRIihabgSM/giphy.gif?cid=790b7611lfnv80ed7xj6pqjgd9capywp531tr7z5dxohsktq&ep=v1_gifs_search&rid=giphy.gif&ct=g")
         
         elif 3 <= random_number <= 6:
-            # Send reaction and a GIF for "not bad"
-            await message.add_reaction('👌')  # Reaction for "not bad"
+            await message.add_reaction('👌')
             await message.channel.send("Not bad!")
-            await message.channel.send("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExZjljZnplNTRvYnQwOGdydGd1MHd5OGZza2U0ZDF0anptemptMXk5bCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xThuW2Vrx2ruC42Dcc/giphy.gif")  # Replace with your GIF link
+            await message.channel.send("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExZjljZnplNTRvYnQwOGdydGd1MHd5OGZza2U0ZDF0anptemptMXk5bCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xThuW2Vrx2ruC42Dcc/giphy.gif")
         
         elif random_number <= 2:
-            # Send reaction and a GIF for "laughing"
-            await message.add_reaction('😂')  # Reaction for "laughing"
+            await message.add_reaction('😂')
             await message.channel.send("LMAO")
-            await message.channel.send("https://media.giphy.com/media/3o6Zt4HU9uwXmXSAuI/giphy.gif?cid=790b7611lawpdpj3bqs7ynh1tzi0vhmnmdh3xcvrurnl9s8p&ep=v1_gifs_search&rid=giphy.gif&ct=g")  # Replace with your GIF link
-
- 
-
+            await message.channel.send("https://media.giphy.com/media/3o6Zt4HU9uwXmXSAuI/giphy.gif?cid=790b7611lawpdpj3bqs7ynh1tzi0vhmnmdh3xcvrurnl9s8p&ep=v1_gifs_search&rid=giphy.gif&ct=g")
 
 # Run the bot
 bot.run(os.getenv("BOT_TOKEN"))
