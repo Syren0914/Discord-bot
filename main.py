@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 import requests
 import csv
 import datetime
@@ -9,6 +10,8 @@ from discord.ext import commands
 import random
 import news
 
+
+load_dotenv()
 # Constants
 CSV_URL = os.getenv("GOOGLE_SPREADSHEET")
 CHANNEL_ID = int(os.getenv("CHANNEL_ID"))

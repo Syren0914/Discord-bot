@@ -1,6 +1,8 @@
+from dotenv import load_dotenv
 import google.generativeai as genai
 import os
 import random
+
 
 techTitles = [
   "🧩 APL: Unlocking the Power of Symbols in Programming!",
@@ -176,6 +178,8 @@ techTitles = [
 
 ]
 
+load_dotenv()
+
 def ai_news():
     if not techTitles:
         print("All topics have been used!")
@@ -187,7 +191,7 @@ def ai_news():
 
     random_index = random.randint(0, len(techTitles) - 1)
     selected_topic = techTitles.pop(random_index)
-
+    
     response = model.generate_content(f"""Create a Discord-friendly post about an esoteric or niche technology: {selected_topic}. Make sure to vary the format and structure each time you use this prompt. Include the following elements:
 
     Engaging Title: Choose a creative title that draws attention.
@@ -200,6 +204,4 @@ def ai_news():
     (add emojis also indent the text better)
     """)
 
-    return print(response.text)
-
-ai_news()
+    return response.text
